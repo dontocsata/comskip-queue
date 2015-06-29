@@ -5,11 +5,9 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ComskipProgressReporter extends InputStreamRunnable implements
-		ProgressReporter {
+public class ComskipProgressReporter extends InputStreamRunnable implements ProgressReporter {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(ComskipProgressReporter.class);
+	private static final Logger log = LoggerFactory.getLogger(ComskipProgressReporter.class);
 
 	public ComskipProgressReporter(InputStream in) {
 		super(in);

@@ -9,8 +9,7 @@ import org.slf4j.LoggerFactory;
 
 public class InputStreamRunnable implements Runnable {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(InputStreamRunnable.class);
+	private static final Logger log = LoggerFactory.getLogger(InputStreamRunnable.class);
 
 	private InputStream in;
 	private StringBuilder sb = new StringBuilder();

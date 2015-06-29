@@ -152,8 +152,8 @@ public class Queueing extends TimerTask {
 				File file = null;
 				try {
 					file = workQueue.take();
-					File commercialFile = new File(props.getProperty(COMMERCIAL_DIR) + "/"
-							+ getFilenameWithoutExtension(file) + ".xml");
+					File commercialFile = new File(
+							props.getProperty(COMMERCIAL_DIR) + "/" + getFilenameWithoutExtension(file) + ".xml");
 					if (commercialFile.exists()) {
 						processed.add(file.getAbsolutePath());
 						continue;

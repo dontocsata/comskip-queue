@@ -8,8 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class ProcessWatchDog implements Runnable {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(ProcessWatchDog.class);
+	private static final Logger log = LoggerFactory.getLogger(ProcessWatchDog.class);
 
 	public static final int PROCESS_KILLED = -100;
 
@@ -23,8 +22,7 @@ public class ProcessWatchDog implements Runnable {
 	private volatile Thread thread;
 	private volatile boolean running = true;
 
-	public ProcessWatchDog(Process process, ProgressReporter progress,
-			long time, TimeUnit unit) {
+	public ProcessWatchDog(Process process, ProgressReporter progress, long time, TimeUnit unit) {
 		this.process = process;
 		this.start = new Date();
 		this.end = new Date(start.getTime() + unit.toMillis(time));
