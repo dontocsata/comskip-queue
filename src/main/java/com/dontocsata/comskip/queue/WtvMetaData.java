@@ -33,9 +33,11 @@ public class WtvMetaData {
 	public static enum MetaDataType {
 		INTEGER(0x00),
 		STRING(0x01),
+		IMAGE(0x02),
 		BOOLEAN(0x03),
 		LONG(0x04),
-		GUID(0x06);
+		GUID(0x06),
+		OTHER(0xFF);
 
 		private int code;
 
@@ -49,7 +51,8 @@ public class WtvMetaData {
 					return type;
 				}
 			}
-			throw new IllegalArgumentException("Unsupport meta data type with code: " + code);
+			//throw new IllegalArgumentException("Unsupport meta data type with code: " + code);
+			return OTHER;
 		}
 	}
 }

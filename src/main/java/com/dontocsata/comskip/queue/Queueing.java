@@ -7,12 +7,16 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
@@ -25,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.io.Files;
+
 public class Queueing extends TimerTask {
 
 	public static final String SKIP_CONVERSION = "skip.conversion";
@@ -36,6 +42,11 @@ public class Queueing extends TimerTask {
 	public static final String WTVCONVERT_EXE = "wtvconvert.executable";
 	public static final String PROCESSED_FILE = "processed.file";
 	public static final String WORKER_THREADS = "worker.threads";
+	public static final String COPY_WTV = "copy.wtv";
+	public static final String COPY_WTV_NAMES = "copy.wtv.names";
+	public static final String COPY_WTV_DIR = "copy.wtv.directory";
+	public static final String SRT_DIR = "srt.directory";
+	public static final String CCEXTRACTOR_EXE = "ccextractor.executable";
 
 	private static final Logger PROCESSED_LOGGER = LoggerFactory.getLogger("processed");
 	private static final Logger log = LoggerFactory.getLogger(Queueing.class);
@@ -69,6 +80,7 @@ public class Queueing extends TimerTask {
 	}
 
 	private Properties props;
+	private Set<String> wtvCopyNames = new HashSet<>();
 	private LinkedBlockingDeque<File> workQueue = new LinkedBlockingDeque<>();
 
 	private Set<String> processed = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
@@ -96,6 +108,9 @@ public class Queueing extends TimerTask {
 			workers.add(w);
 			new Thread(w, "Worker-" + (i + 1)).start();
 		}
+		String[] names = props.getProperty(COPY_WTV_NAMES).split(",");
+		wtvCopyNames.addAll(Arrays.asList(names));
+		log.info("WTV Copy Names: {}", wtvCopyNames);
 	}
 
 	public void shutdown() {
@@ -131,7 +146,9 @@ public class Queueing extends TimerTask {
 			processing.add(file.toString());
 			workQueue.add(file);
 		}
-		log.info("Work Queue size={}", workQueue.size());
+		if (workQueue.size() > 0) {
+			log.info("Work Queue size={}", workQueue.size());
+		}
 		for (Iterator<String> it = toBeDeleted.iterator(); it.hasNext();) {
 			File f = new File(it.next());
 			if (f.delete()) {
@@ -233,6 +250,28 @@ public class Queueing extends TimerTask {
 								}
 								if (toComskipFile.exists()) {
 									toBeDeleted.add(toComskipFile.getAbsolutePath());
+								}
+							}
+							boolean copyWtv = Boolean.parseBoolean(props.getProperty(COPY_WTV, "false"));
+							if (copyWtv) {
+								Map<String, WtvMetaData> metadata = WtvMetaParser.parse(file);
+								WtvMetaData wtvMetaData = metadata.get("Title");
+								if (wtvMetaData != null && wtvCopyNames.contains(wtvMetaData.getValue().toString())) {
+									String ccextractor = props.getProperty(CCEXTRACTOR_EXE);
+									String srtDestination = props.getProperty(SRT_DIR);
+									log.debug("Starting CCExtractor on {}", file);
+									Process ccProc = Runtime.getRuntime()
+											.exec(new String[] { ccextractor, file.getAbsolutePath(), "-o",
+													new File(srtDestination, getFilenameWithoutExtension(file) + ".srt")
+													.getAbsolutePath() });
+									ccProc.waitFor();
+									File dest = Paths.get(props.getProperty(COPY_WTV_DIR), file.getName()).toFile();
+									log.debug("Copying {} to {}", file, dest);
+									Files.copy(file, dest);
+									dest = Paths.get(props.getProperty(COPY_WTV_DIR), commercialFile.getName())
+											.toFile();
+									log.debug("Copying {} to {}", commercialFile, dest);
+									Files.copy(commercialFile, dest);
 								}
 							}
 						} else if (commercialFile.exists()) {
