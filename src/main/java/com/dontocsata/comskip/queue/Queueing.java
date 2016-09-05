@@ -46,6 +46,7 @@ public class Queueing extends TimerTask {
 	public static final String COPY_WTV_NAMES = "copy.wtv.names";
 	public static final String COPY_WTV_DIR = "copy.wtv.directory";
 	public static final String SRT_DIR = "srt.directory";
+	public static final String EXTRACT_SRT = "extract.srt";
 	public static final String CCEXTRACTOR_EXE = "ccextractor.executable";
 
 	private static final Logger PROCESSED_LOGGER = LoggerFactory.getLogger("processed");
@@ -257,14 +258,17 @@ public class Queueing extends TimerTask {
 								Map<String, WtvMetaData> metadata = WtvMetaParser.parse(file);
 								WtvMetaData wtvMetaData = metadata.get("Title");
 								if (wtvMetaData != null && wtvCopyNames.contains(wtvMetaData.getValue().toString())) {
-									String ccextractor = props.getProperty(CCEXTRACTOR_EXE);
-									String srtDestination = props.getProperty(SRT_DIR);
-									log.debug("Starting CCExtractor on {}", file);
-									Process ccProc = Runtime.getRuntime()
-											.exec(new String[] { ccextractor, file.getAbsolutePath(), "-o",
-													new File(srtDestination, getFilenameWithoutExtension(file) + ".srt")
-													.getAbsolutePath() });
-									ccProc.waitFor();
+									if (Boolean.parseBoolean(props.getProperty(EXTRACT_SRT, "false"))) {
+										String ccextractor = props.getProperty(CCEXTRACTOR_EXE);
+										String srtDestination = props.getProperty(SRT_DIR);
+										log.debug("Starting CCExtractor on {}", file);
+										Process ccProc = Runtime.getRuntime()
+												.exec(new String[] { ccextractor, file.getAbsolutePath(), "-o",
+														new File(srtDestination,
+																getFilenameWithoutExtension(file) + ".srt")
+																		.getAbsolutePath() });
+										ccProc.waitFor();
+									}
 									File dest = Paths.get(props.getProperty(COPY_WTV_DIR), file.getName()).toFile();
 									log.debug("Copying {} to {}", file, dest);
 									Files.copy(file, dest);
